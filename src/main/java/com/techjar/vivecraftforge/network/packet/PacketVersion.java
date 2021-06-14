@@ -10,7 +10,7 @@ import com.techjar.vivecraftforge.network.ChannelHandler;
 import com.techjar.vivecraftforge.network.IPacket;
 import com.techjar.vivecraftforge.util.LogHelper;
 import com.techjar.vivecraftforge.util.PlayerTracker;
-import com.techjar.vivecraftforge.util.VRPlayerData;
+import com.techjar.vivecraftforge.util.RawVRPlayerData;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.ChatType;
@@ -80,7 +80,7 @@ public class PacketVersion implements IPacket {
 			}
 
 			context.get().enqueueWork(() -> {
-				PlayerTracker.players.put(player.getGameProfile().getId(), new VRPlayerData());
+				PlayerTracker.players.put(player.getGameProfile().getId(), new RawVRPlayerData());
 				if (Config.enableJoinMessages.get() && !Config.joinMessageVR.get().isEmpty())
 					player.getServer().getPlayerList().func_232641_a_(new StringTextComponent(String.format(Config.joinMessageVR.get(), player.getDisplayName())), ChatType.SYSTEM, net.minecraft.util.Util.DUMMY_UUID);
 			});

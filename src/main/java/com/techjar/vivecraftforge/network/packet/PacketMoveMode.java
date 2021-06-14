@@ -3,9 +3,6 @@ package com.techjar.vivecraftforge.network.packet;
 import java.util.function.Supplier;
 
 import com.techjar.vivecraftforge.network.IPacket;
-import com.techjar.vivecraftforge.util.PlayerTracker;
-import com.techjar.vivecraftforge.util.VRPlayerData;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
 

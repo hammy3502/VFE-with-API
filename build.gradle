@@ -20,7 +20,7 @@ apply plugin: 'eclipse'
 
 version = "1.3.3"
 group = "com.techjar.vivecraftforge" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "VivecraftForgeExtensions-${mcversion}"
+archivesBaseName = "VivecraftForgeExtensions-with-API-${mcversion}"
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
 

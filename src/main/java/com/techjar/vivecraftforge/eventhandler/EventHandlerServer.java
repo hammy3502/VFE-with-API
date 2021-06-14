@@ -1,6 +1,7 @@
 package com.techjar.vivecraftforge.eventhandler;
 
 import com.techjar.vivecraftforge.Config;
+import com.techjar.vivecraftforge.VivecraftForge;
 import com.techjar.vivecraftforge.entity.ai.goal.VRCreeperSwellGoal;
 import com.techjar.vivecraftforge.entity.ai.goal.VREndermanFindPlayerGoal;
 import com.techjar.vivecraftforge.entity.ai.goal.VREndermanStareGoal;
@@ -10,7 +11,7 @@ import com.techjar.vivecraftforge.util.AimFixHandler;
 import com.techjar.vivecraftforge.util.LogHelper;
 import com.techjar.vivecraftforge.util.PlayerTracker;
 import com.techjar.vivecraftforge.util.Util;
-import com.techjar.vivecraftforge.util.VRPlayerData;
+import com.techjar.vivecraftforge.util.RawVRPlayerData;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.Pose;
 import net.minecraft.entity.ai.goal.CreeperSwellGoal;
@@ -37,6 +38,8 @@ import net.minecraftforge.event.entity.player.ArrowLooseEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 import java.util.Map;
@@ -52,7 +55,7 @@ public class EventHandlerServer {
 			PlayerList playerList = ServerLifecycleHooks.getCurrentServer().getPlayerList();
 			int viewDist = playerList.getViewDistance();
 			float range = MathHelper.clamp(viewDist / 8.0F, 1.0F, 2.5F) * 64.0F; // This is how the client determines entity render distance
-			for (Map.Entry<UUID, VRPlayerData> entry : PlayerTracker.players.entrySet()) {
+			for (Map.Entry<UUID, RawVRPlayerData> entry : PlayerTracker.players.entrySet()) {
 				ServerPlayerEntity player = playerList.getPlayerByUUID(entry.getKey());
 				if (player != null) {
 					PacketUberPacket packet = PlayerTracker.getPlayerDataPacket(entry.getKey(), entry.getValue());
@@ -68,10 +71,10 @@ public class EventHandlerServer {
 			PlayerEntity player = event.getPlayer();
 			PlayerEntity target = (PlayerEntity)event.getTarget();
 			if (PlayerTracker.hasPlayerData(player)) {
-				VRPlayerData data = PlayerTracker.getPlayerData(player);
+				RawVRPlayerData data = PlayerTracker.getPlayerData(player);
 				if (data.seated) { // Seated VR vs...
 					if (PlayerTracker.hasPlayerData(target)) {
-						VRPlayerData targetData = PlayerTracker.getPlayerData(target);
+						RawVRPlayerData targetData = PlayerTracker.getPlayerData(target);
 						if (targetData.seated) { // ...seated VR
 							if (!Config.seatedVrVsSeatedVR.get()) event.setCanceled(true);
 						} else { // ...VR
@@ -82,7 +85,7 @@ public class EventHandlerServer {
 					}
 				} else { // VR vs...
 					if (PlayerTracker.hasPlayerData(target)) {
-						VRPlayerData targetData = PlayerTracker.getPlayerData(target);
+						RawVRPlayerData targetData = PlayerTracker.getPlayerData(target);
 						if (targetData.seated) { // ...seated VR
 							if (!Config.vrVsSeatedVR.get()) event.setCanceled(true);
 						} else { // ...VR
@@ -94,7 +97,7 @@ public class EventHandlerServer {
 				}
 			} else { // Non-VR vs...
 				if (PlayerTracker.hasPlayerData(target)) {
-					VRPlayerData targetData = PlayerTracker.getPlayerData(target);
+					RawVRPlayerData targetData = PlayerTracker.getPlayerData(target);
 					if (targetData.seated) { // ...seated VR
 						if (!Config.seatedVrVsNonVR.get()) event.setCanceled(true);
 					} else { // ...VR
@@ -108,7 +111,7 @@ public class EventHandlerServer {
 	@SubscribeEvent
 	public void onArrowLoose(ArrowLooseEvent event) {
 		PlayerEntity player = event.getPlayer();
-		VRPlayerData data = PlayerTracker.getPlayerData(player);
+		RawVRPlayerData data = PlayerTracker.getPlayerData(player);
 		if (data != null && !data.seated && data.bowDraw > 0) {
 			LogHelper.debug("Bow draw: " + data.bowDraw);
 			event.setCharge(Math.round(data.bowDraw * 20));
@@ -123,7 +126,7 @@ public class EventHandlerServer {
 			ArrowEntity arrow = (ArrowEntity) source.getImmediateSource();
 			PlayerEntity attacker = (PlayerEntity)source.getTrueSource();
 			if (PlayerTracker.hasPlayerData(attacker)) {
-				VRPlayerData data = PlayerTracker.getPlayerData(attacker);
+				RawVRPlayerData data = PlayerTracker.getPlayerData(attacker);
 				boolean headshot = Util.isHeadshot(target, arrow);
 				if (data.seated) {
 					if (headshot) event.setAmount(event.getAmount() * Config.bowSeatedHeadshotMul.get().floatValue());
@@ -166,7 +169,7 @@ public class EventHandlerServer {
 				return;
 
 			boolean arrow = projectile instanceof AbstractArrowEntity && !(projectile instanceof TridentEntity);
-			VRPlayerData data = PlayerTracker.getPlayerDataAbsolute(shooter);
+			RawVRPlayerData data = PlayerTracker.getPlayerDataAbsolute(shooter);
 			Vector3d pos = data.getController(data.activeHand).getPos();
 			Vector3d aim = data.getController(data.activeHand).getRot().multiply(new Vector3d(0, 0, -1));
 
@@ -200,7 +203,7 @@ public class EventHandlerServer {
 		if (!PlayerTracker.hasPlayerData(event.getPlayer()))
 			return;
 
-		VRPlayerData data = PlayerTracker.getPlayerDataAbsolute(event.getPlayer());
+		RawVRPlayerData data = PlayerTracker.getPlayerDataAbsolute(event.getPlayer());
 		ItemEntity item = event.getEntityItem();
 
 		Vector3d pos = data.getController(0).getPos();
@@ -217,13 +220,16 @@ public class EventHandlerServer {
 	@SubscribeEvent
 	public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
 		NetworkManager netManager = ((ServerPlayerEntity)event.getPlayer()).connection.getNetworkManager();
-		netManager.channel().pipeline().addBefore("packet_handler", "vr_aim_fix", new AimFixHandler(netManager));
+		if (!VivecraftForge.isVivecraftInstalled) {
+			netManager.channel().pipeline().addBefore("packet_handler", "vr_aim_fix", new AimFixHandler(netManager));
+		}
+
 	}
 
 	@SubscribeEvent
 	public void onPlayerTick(TickEvent.PlayerTickEvent event) {
 		if (event.phase == TickEvent.Phase.END) {
-			VRPlayerData data = PlayerTracker.getPlayerData(event.player);
+			RawVRPlayerData data = PlayerTracker.getPlayerData(event.player);
 			if (data != null && data.crawling)
 				event.player.setPose(Pose.SWIMMING);
 		}

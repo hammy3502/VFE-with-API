@@ -59,7 +59,7 @@ public class Util {
 	public static boolean shouldEndermanAttackVRPlayer(EndermanEntity enderman, PlayerEntity player) {
 		ItemStack itemstack = player.inventory.armorInventory.get(3);
 		if (!itemstack.isEnderMask(player, enderman)) {
-			VRPlayerData data = PlayerTracker.getPlayerDataAbsolute(player);
+			RawVRPlayerData data = PlayerTracker.getPlayerDataAbsolute(player);
 			Quaternion quat = data.head.getRot();
 			Vector3d vector3d = quat.multiply(new Vector3d(0, 0, -1));
 			Vector3d vector3d1 = new Vector3d(enderman.getPosX() - data.head.posX, enderman.getPosYEye() - data.head.posY, enderman.getPosZ() - data.head.posZ);

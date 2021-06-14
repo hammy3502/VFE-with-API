@@ -4,7 +4,7 @@ import java.util.function.Supplier;
 
 import com.techjar.vivecraftforge.network.IPacket;
 import com.techjar.vivecraftforge.util.PlayerTracker;
-import com.techjar.vivecraftforge.util.VRPlayerData;
+import com.techjar.vivecraftforge.util.RawVRPlayerData;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -35,7 +35,7 @@ public class PacketWorldScale implements IPacket {
 		context.get().enqueueWork(() -> {
 			if (!PlayerTracker.hasPlayerData(player))
 				return;
-			VRPlayerData data = PlayerTracker.getPlayerData(player, true);
+			RawVRPlayerData data = PlayerTracker.getPlayerData(player, true);
 			data.worldScale = worldScale;
 		});
 	}

@@ -38,3 +38,6 @@ generated/
 
 # Misc
 .directory
+
+# Build scripts
+*.bat

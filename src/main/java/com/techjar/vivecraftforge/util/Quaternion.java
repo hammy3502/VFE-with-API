@@ -1,6 +1,7 @@
 
 package com.techjar.vivecraftforge.util;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.util.math.vector.Vector3d;
 
 /**
@@ -124,6 +125,15 @@ public class Quaternion {
 		double y = (num7 + num12) * vec.x + (1f - (num4 + num6)) * vec.y + (num9 - num10) * vec.z;
 		double z = (num8 - num11) * vec.x + (num9 + num10) * vec.y + (1f - (num4 + num5)) * vec.z;
 		return new Vector3d(x, y, z);
+	}
+
+	/**
+	 * Gets this Quaternion as a look vector. Same as {@link Entity#getLookVec()}, but for the controller/head.<br>
+	 * <br>
+	 * @return A Vector3d representing the direction the controller/headset is looking/pointing.
+	 */
+	public Vector3d asLookVector() {
+		return this.multiply(new Vector3d( 0, 0, -1));
 	}
 
 	@Override

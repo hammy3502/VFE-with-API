@@ -5,7 +5,6 @@ import javax.annotation.Nullable;
 
 import com.techjar.vivecraftforge.util.PlayerTracker;
 import com.techjar.vivecraftforge.util.Util;
-import com.techjar.vivecraftforge.util.VRPlayerData;
 import net.minecraft.entity.EntityPredicate;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.monster.EndermanEntity;
